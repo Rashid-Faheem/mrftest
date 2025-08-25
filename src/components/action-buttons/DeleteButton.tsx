@@ -57,7 +57,7 @@ export default function DeleteButton({
       else if(model ==  'feeDetail')
       {
         // Implement feeMaster deletion logic here  
-        result = await deleteFeeDetail(Number(id))
+        result = await deleteFeeDetail(String(id))
       }
 
       if (!result?.success) {

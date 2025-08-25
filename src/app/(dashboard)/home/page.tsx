@@ -15,7 +15,7 @@ export default function Dashboard() {
     if (!savedSession) router.push("/login")
     else setSession(JSON.parse(savedSession))
     setLoading(false)
-  }, [])
+  }, [router])
 
   if (loading) return <LoadingForm /> //<div>Loading...</div>
 if (!session) return <div>Loading...</div>

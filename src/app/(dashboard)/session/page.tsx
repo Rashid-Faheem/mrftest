@@ -12,7 +12,7 @@ export default function DemoPage() {
   const [loading, setLoading] = useState(true)
 
  const fetchsession = useCallback(async () => {
-    /*
+   
     setLoading(true)
     try {
       const data = await fetchSessions()
@@ -22,8 +22,8 @@ export default function DemoPage() {
     } finally {
       setLoading(false)
     }
-    */
-
+    
+/*
     setLoading(true)
     const res = await fetch("/api/sessionMaster", {
       method: "GetSessionList",
@@ -36,6 +36,7 @@ export default function DemoPage() {
     console.log(data);
     setsession(data);
     setLoading(false);
+    */
   }, [])
 
   useEffect(() => {

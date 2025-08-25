@@ -57,7 +57,7 @@ export async function fetchClassMasters() {
 
 export async function getClassById(id: string) {
   const classMaster = await prisma.classMaster.findUnique({
-    where: { id: Number(id) },
+    where: { id: id },
   });
   return classMaster;
 }
@@ -71,7 +71,7 @@ export async function upsertClass(formData: any, id?: string) {
 
     if (id) {
       await prisma.classMaster.update({
-        where: { id: Number(id) },
+        where: { id:id },
         data,
       });
       return { success: true, message: "Class updated successfully" };
@@ -88,7 +88,7 @@ export async function upsertClass(formData: any, id?: string) {
 export async function deleteClassMaster(id: string) {
   try {
     await prisma.classMaster.delete({
-      where: { id: Number(id) },
+      where: { id: (id) },
     });
     return { success: true };
   } catch (error) {
@@ -113,7 +113,7 @@ export async function getOpenSessions() {
       id: {
         notIn:
           usedSessionIds.length > 0
-            ? usedSessionIds.filter((id): id is number => id !== null)
+            ? usedSessionIds.filter((id): id is string => id !== null)
             : [], // avoid empty [] bug
       },
     },
@@ -131,7 +131,7 @@ export async function createPaymentMonths(
     const entries = months.map((m) => ({
       month_name: m.label,
       date: new Date(m.value),
-      session_id: Number(sessionId),
+      session_id: (sessionId),
       active: true,
     }));
 
@@ -167,7 +167,7 @@ export async function fetchStudents() {
 
 export async function getStudentById(id: string) {
   return await prisma.student.findUnique({
-    where: { id: Number(id) },
+    where: { id: (id) },
   });
 }
 
@@ -188,7 +188,7 @@ export async function getActiveClasses() {
 export async function createOrUpdateStudent(id: string | null, data: any) {
   if (id) {
     return await prisma.student.update({
-      where: { id: Number(id) },
+      where: { id: (id) },
       data,
     });
   } else {
@@ -199,7 +199,7 @@ export async function createOrUpdateStudent(id: string | null, data: any) {
 export async function deleteStudent(id: string) {
   try {
     await prisma.student.delete({
-      where: { id: Number(id) },
+      where: { id: (id) },
     });
     return { success: true };
   } catch (error) {
@@ -208,139 +208,15 @@ export async function deleteStudent(id: string) {
   }
 }
 
-export async function getUnassignedStudents() {
-  // Step 1: Get all student IDs used in studentClass
-  const assigned = await prisma.studentClass.findMany({
-    distinct: ["student_id"],
-    select: { student_id: true },
-  });
 
-  const assignedIds = assigned.map((s) => s.student_id);
-
-  // Step 2: Get students NOT in assignedIds
-  const unassignedStudents = await prisma.student.findMany({
-    where: {
-      id: {
-        notIn: assignedIds.length > 0 ? assignedIds : [0], // Avoid empty [] causing full-table scan
-      },
-    },
-    orderBy: { name: "asc" },
-  });
-
-  return unassignedStudents;
-}
 
 export async function insertnewClass(data: any) {
   await prisma.studentClass.create({ data });
 }
 
-export async function getStudent_ClassTransfer(
-  session_id: number,
-  class_id: number,
-  section: string
-) {
-  const studentClasslist = await prisma.studentClass.findMany({
-    where: { 
-      session_id: Number(session_id), 
-      class_id: Number(class_id),
-      section: section  ,
-      active: true
-    },
-    include: { student: true },
-  });
-
-  return studentClasslist;
-}
 
 
 
-interface PromoteData {
-  fromSession: number;
-  fromClass: number;
-  fromsection?: string;
-  toSession: number;
-  toClass: number;
-  tosection?: string;
-  feeAmt: number;
-  studentIds: number[];
-}
-
-
-export async function promoteStudents(data: PromoteData) {
-  const {
-    fromSession,
-    fromClass,
-    fromsection,
-    toSession,
-    toClass,
-    tosection,
-    feeAmt,
-    studentIds,
-  } = data;
-
-  try {
-    await prisma.$transaction(async (tx) => {
-      
-      // Step 1: Mark existing records as inactive
-      await tx.studentClass.updateMany({
-        where: {
-          student_id: { in: studentIds },
-          // session_id: fromSession,
-          // class_id: fromClass,
-          // section: fromsection,
-          active: true,
-        },
-        data: {
-          active: false,
-          //  passed: true,
-        },
-      });
-      console.log(data);
-
-      // Step 2: Create new StudentClass records
-      const newRecords = studentIds.map((id) => ({
-        student_id: id,
-        class_id: toClass,
-        session_id: toSession,
-        section: tosection ?? "A",
-        feeAmt: feeAmt,
-        active: true,
-        passed: false,
-      }));
-      console.log(newRecords);
-
-      await tx.studentClass.createMany({
-        data: newRecords,
-      });
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error("Promotion failed:", error);
-    throw new Error("Failed to promote students");
-  }
-}
-
-export async function getStudentInvoiceData(id: number) {
-  const record = await prisma.studentClass.findUnique({
-    where: { id },
-    include: {
-      student: true,
-      class_: true,
-      session: true,
-    },
-  });
-
-  if (!record) throw new Error("Invoice not found");
-
-  return {
-    student: record.student,
-    class: record.class_,
-    session: record.session,
-    section: record.section,
-    feeAmt: record.feeAmt,
-  };
-}
 
 // ---------------- Category master data -------------------------
 
@@ -355,7 +231,7 @@ export async function fetchCategoryMaster() {
 
 export async function getcategoryById(id: string) {
   const categoryMaster = await prisma.categoryMaster.findUnique({
-    where: { id: Number(id) },
+    where: { id: (id) },
   });
   return categoryMaster;
 }
@@ -370,7 +246,7 @@ export async function upsertcategoryMaster(formData: any, id?: string) {
 
     if (id) {
       await prisma.categoryMaster.update({
-        where: { id: Number(id) },
+        where: { id: (id) },
         data,
       });
       return { success: true, message: "Category updated successfully" };
@@ -387,7 +263,7 @@ export async function upsertcategoryMaster(formData: any, id?: string) {
 export async function deleteCategoryMaster(id: string) {
   try {
     await prisma.categoryMaster.delete({
-      where: { id: Number(id) },
+      where: { id: (id) },
     });
     return { success: true };
   } catch (error) {
@@ -422,10 +298,10 @@ export async function fetchFeeVoucherList() {
   });
 }
 
-export async function deleteFeeDetail(id: number) {
+export async function deleteFeeDetail(id: string) {
   try {
     await prisma.feeDetail.delete({
-      where: { id: Number(id), settled: false, },
+      where: { id: (id), settled: false, },
     });
     return { success: true };
   } catch (error) {
@@ -435,7 +311,7 @@ export async function deleteFeeDetail(id: number) {
 }
 
 
-export async function getFeeVoucher(stdid: number) {
+export async function getFeeVoucher(stdid: string) {
   return await prisma.feeDetail.findMany({
     where: { student_id: stdid, settled: false },
     include: {
@@ -506,7 +382,7 @@ export async function ReceiptVoucherList() {
 
 export async function getReceiptById(id: string) {
   const feePayment = await prisma.feePayment.findUnique({
-    where: { id: Number(id) },
+    where: { id: (id) },
   });
   return feePayment;
 }
