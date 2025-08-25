@@ -1,0 +1,199 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+
+enum UserSex {
+  MALE
+  FEMALE
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(USER)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SessionMaster {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionName   String         @unique
+  startDate     DateTime
+  endDate       DateTime
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  paymentMonths PaymentMonth[]
+  students      Student[]
+  StudentClass  StudentClass[]
+
+  feeMaster feeMaster[]
+
+  feePayment feePayment[]
+}
+
+model ClassMaster {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  class_name   String         @unique
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  students     Student[]
+  StudentClass StudentClass[]
+
+  feeDetail feeDetail[]
+
+  feePayment feePayment[]
+}
+
+model Student {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  fname        String
+  mname        String?
+  sex          UserSex
+  address      String?
+  dob          DateTime?
+  contactno    String
+  active       Boolean        @default(true)
+  donation     Boolean        @default(false)
+  fcnic        String?
+  mcnic        String?
+  session_id   String? @db.ObjectId
+  class_id     String? @db.ObjectId
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  class_       ClassMaster?   @relation(fields: [class_id], references: [id])
+  session      SessionMaster? @relation(fields: [session_id], references: [id])
+  StudentClass StudentClass[]
+
+  feeDetail feeDetail[]
+
+  feePayment feePayment[]
+}
+
+model PaymentMonth {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  month_name String         @unique
+  date       DateTime
+  active     Boolean        @default(true)
+  session_id String? @db.ObjectId
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  session    SessionMaster? @relation(fields: [session_id], references: [id])
+
+  feeMaster feeMaster[]
+}
+
+model StudentClass {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  student_id String  @db.ObjectId
+  class_id   String  @db.ObjectId
+  session_id String @db.ObjectId
+  section    String        @default("A")
+  active     Boolean       @default(true)
+  feeAmt     Float         @default(0.0)
+  passed     Boolean       @default(false)
+  remarks    String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  student    Student       @relation(fields: [student_id], references: [id])
+  class_     ClassMaster   @relation(fields: [class_id], references: [id])
+  session    SessionMaster @relation(fields: [session_id], references: [id])
+
+}
+
+model CategoryMaster {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  category  String   @unique
+  active    Boolean  @default(true)
+  tutionfee Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  feeMaster feeMaster[]
+}
+
+model feeMaster {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  vno         Int            @unique
+  tdate       DateTime
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  session_id String @db.ObjectId
+  category_id String @db.ObjectId
+  paymentMonth_id String @db.ObjectId
+
+  session    SessionMaster @relation(fields: [session_id], references: [id])
+  category   CategoryMaster @relation(fields: [category_id], references: [id])
+  paymentMonth PaymentMonth @relation(fields: [paymentMonth_id], references: [id])
+  
+
+  feeDetail feeDetail[]
+}
+
+model feeDetail {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  feeMaster_id String @db.ObjectId
+  student_id  String @db.ObjectId
+  class_id   String @db.ObjectId
+  section     String
+  amount      Float
+  settledvno  Int             @default(0)
+  settled     Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  feeMaster   feeMaster      @relation(fields: [feeMaster_id], references: [id])
+  student     Student        @relation(fields: [student_id], references: [id])
+  class_     ClassMaster    @relation(fields: [class_id], references: [id])
+ feepayment feePayment? @relation(fields: [settledvno], references: [vno], onDelete: Cascade)
+
+  @@index([feeMaster_id])
+  @@index([student_id])
+  @@index([class_id])
+  @@index([settledvno])
+}
+
+
+model feePayment {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  vno         Int            @unique
+  tdate       DateTime
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  session_id  String @db.ObjectId
+  student_id  String @db.ObjectId
+  class_id    String @db.ObjectId
+  section     String
+  amount      Float
+
+  student     Student        @relation(fields: [student_id], references: [id])
+  class_      ClassMaster    @relation(fields: [class_id], references: [id ])
+  session     SessionMaster  @relation(fields: [session_id], references: [id])
+
+  feeDetail feeDetail[]
+}
+
+
