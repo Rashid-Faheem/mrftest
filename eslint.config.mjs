@@ -20,8 +20,12 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
     rules: {
-        'react/no-unescaped-entities': 'off',
-      '@next/next/no-page-custom-font': 'off',
+      "react/no-unescaped-entities": "off",
+      "@next/next/no-page-custom-font": "off",
+
+      // ✅ Added rules
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": "warn",
     },
   },
 ];
